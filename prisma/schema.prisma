@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// 약속 캘린더 모델
+model Calendar {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  ownerId     String
+  owner       User     @relation("Owner", fields: [ownerId], references: [id])
+
+  startDate   DateTime @db.Date // 시작일
+  endDate     DateTime @db.Date // 종료일
+  deadline    DateTime? @db.Date // 응답 마감 기한 (선택 사항)
+
+  availableDays Int[]
+  participants Participant[]
+  responses Response[]
+  
+  inviteCode String @unique @default(cuid())
+}
+
+model Participant {
+  id         String @id @default(cuid())
+  userId     String
+  calendarId String
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, calendarId])
+}
+
+
+model Response {
+  id         String @id @default(cuid())
+  calendarId String
+  userId     String
+  date       DateTime @db.Date // 날짜만 저장 (시간은 불필요)
+  status     Status
+
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarId, userId, date])
+}
+
+enum Status {
+  AVAILABLE
+  PREFERRED
+  UNAVAILABLE
+}
+
+
+// --- NextAuth.js 관련 모델 ---
+// NextAuth Prisma Adapter를 사용하기 위한 필수 모델들입니다.
+// 지금 당장 어댑터를 사용하지 않더라도, 사용자 관리를 위해 기본 User 모델은 필요합니다.
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  participations Participant[]
+  ownedCalendars Calendar[]      @relation("Owner")
+  responses Response[]
+
+
+  // NextAuth Adapter를 위한 관계 필드
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
