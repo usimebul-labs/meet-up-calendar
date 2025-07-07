@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { addMonths, format, subMonths } from 'date-fns';
+import { addMonths, format, isSameMonth, subMonths } from 'date-fns';
 import { useCalendarStore } from '@/store/calendarStore';
 import type { Status } from '@prisma/client';
 import styled from '@emotion/styled';
@@ -15,6 +15,32 @@ const MonthNavigator = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
+`;
+
+const MonthNavButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%; /* 원형 버튼 */
+  border: none;
+  background-color: transparent;
+  color: #6b7280; /* text-gray-500 */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 1.5rem; /* 아이콘 크기 조정 */
+  line-height: 1;
+
+  &:hover:not(:disabled) {
+    background-color: #f3f4f6; /* gray-100 */
+    color: #111827; /* gray-900 */
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;
 
 const MonthTitle = styled.h2`
@@ -52,34 +78,45 @@ const StyledButton = styled.button`
 
 type CalendarHeaderProps = {
   visibleMonth: Date; // currentMonth -> visibleMonth
+  startDate: Date | string;
+  endDate: Date | string;
   onPrevMonth: () => void; // onMonthChange -> onPrevMonth
   onNextMonth: () => void; // onMonthChange -> onNextMonth
   onSubmitStatus: (status: Status) => void;
   isSubmitting: boolean;
 };
 
-export function CalendarHeader({ visibleMonth, onPrevMonth, onNextMonth, onSubmitStatus, isSubmitting }: CalendarHeaderProps) {
+export function CalendarHeader({ visibleMonth, startDate, endDate, onPrevMonth, onNextMonth, onSubmitStatus, isSubmitting }: CalendarHeaderProps) {
   const selectedDates = useCalendarStore((state) => state.selectedDates);
   const isActionDisabled = isSubmitting || selectedDates.size === 0;
 
+  // 현재 보이는 월이 캘린더의 시작 월과 같은지 확인
+  const isPrevDisabled = isSameMonth(visibleMonth, new Date(startDate));
+  // 현재 보이는 월이 캘린더의 종료 월과 같은지 확인
+  const isNextDisabled = isSameMonth(visibleMonth, new Date(endDate));
+
   return (
     <HeaderContainer>
-      <MonthNavigator>
-        <button onClick={onPrevMonth}>{"<"}</button>
-        <MonthTitle>{format(visibleMonth, 'yyyy년 M월')}</MonthTitle>
-        <button onClick={onNextMonth}>{">"}</button>
-      </MonthNavigator>
       <ActionButtons>
         <StyledButton onClick={() => onSubmitStatus('AVAILABLE')} disabled={isActionDisabled}>
-          가능
+          참석
         </StyledButton>
         <StyledButton onClick={() => onSubmitStatus('PREFERRED')} disabled={isActionDisabled}>
           선호
         </StyledButton>
         <StyledButton onClick={() => onSubmitStatus('UNAVAILABLE')} disabled={isActionDisabled}>
-          불가능
+          불참
         </StyledButton>
       </ActionButtons>
+      <MonthNavigator>
+        <MonthNavButton onClick={onPrevMonth} disabled={isPrevDisabled} aria-label="Previous month">
+          ‹
+        </MonthNavButton>
+        <MonthTitle>{format(visibleMonth, 'yyyy년 M월')}</MonthTitle>
+        <MonthNavButton onClick={onNextMonth} disabled={isNextDisabled} aria-label="Next month">
+          ›
+        </MonthNavButton>
+      </MonthNavigator>
     </HeaderContainer>
   );
 }

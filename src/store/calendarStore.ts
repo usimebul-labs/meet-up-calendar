@@ -1,16 +1,21 @@
 import { create } from 'zustand';
-import { eachDayOfInterval, format } from 'date-fns';
 
 type CalendarState = {
   selectedDates: Set<string>;
+  requiredParticipantIds: Set<string>;
+
   actions: {
     // 클릭 이벤트만 처리하는 단일 액션
     toggleDateSelection: (dateStr: string) => void;
     clearSelection: () => void;
+    toggleRequiredParticipant: (userId: string) => void;
+
   };
 };
 export const useCalendarStore = create<CalendarState>((set, get) => ({
   selectedDates: new Set(),
+  requiredParticipantIds: new Set(), // 초기값은 비어있는 Set
+
   actions: {
     /**
      * 특정 날짜의 선택 상태를 토글(toggle)합니다.
@@ -28,7 +33,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
         // 선택되지 않은 날짜면 선택 추가
         newSelection.add(dateStr);
       }
-      
+
       // 새로운 Set으로 상태를 업데이트합니다.
       set({ selectedDates: newSelection });
     },
@@ -37,6 +42,21 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
      * 모든 선택을 해제합니다.
      */
     clearSelection: () => set({ selectedDates: new Set() }),
+
+    /**
+     * 특정 참여자의 '필수' 상태를 토글합니다.
+     * @param userId - 토글할 사용자의 ID
+     */
+    toggleRequiredParticipant: (userId) => {
+      const currentRequired = get().requiredParticipantIds;
+      const nextRequired = new Set(currentRequired);
+      if (nextRequired.has(userId)) {
+        nextRequired.delete(userId);
+      } else {
+        nextRequired.add(userId);
+      }
+      set({ requiredParticipantIds: nextRequired });
+    }
   },
 }));
 

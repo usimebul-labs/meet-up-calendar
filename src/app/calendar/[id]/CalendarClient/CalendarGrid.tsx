@@ -131,7 +131,6 @@ export const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(functi
               else monthRefs.current.delete(monthKey);
             }}
           >
-            <MonthTitle>{format(month, 'yyyy년 M월')}</MonthTitle>
             <GridContainer>
               {['일', '월', '화', '수', '목', '금', '토'].map((day) => (
                 <DayHeader key={day}>{day}</DayHeader>

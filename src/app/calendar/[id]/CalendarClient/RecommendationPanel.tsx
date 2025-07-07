@@ -10,6 +10,7 @@ import { calculateRecommendations } from '@/services/recommendation.service';
 import type { CalendarData } from '@/services/calendar.service';
 import { Disclosure, Transition } from '@headlessui/react'; // Disclosure, Transition import
 import { getUserColor } from '@/utils/colorUtils';
+import { useCalendarStore } from '@/store/calendarStore';
 
 const PanelContainer = styled.div`
   background-color: #ffffff;
@@ -45,14 +46,7 @@ const RecommendationItem = styled.li`
   }
 `;
 
-const NoResultText = styled.p`
-  font-size: 0.9rem;
-  color: #9ca3af;
-  text-align: center;
-  padding: 1rem 0;
-`;
-
-const DisclosureButton = styled(Disclosure.Button)<{ open: boolean }>`
+const DisclosureButton = styled(Disclosure.Button)<{ open: boolean; best: boolean }>`
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -70,6 +64,10 @@ const DisclosureButton = styled(Disclosure.Button)<{ open: boolean }>`
     border-color: #e5e7eb;
   }
 
+  /* isBest prop에 따라 스타일 동적 변경 */
+  border: 1px solid ${(props) => (props.best ? '#fbbf24' : 'transparent')};
+  background-color: ${(props) => (props.best ? '#fefce8' : 'transparent')};
+
   ${(props) =>
     props.open &&
     css`
@@ -77,9 +75,31 @@ const DisclosureButton = styled(Disclosure.Button)<{ open: boolean }>`
     `}
 `;
 
+// DateText를 flex container로 변경
+const DateTextContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const DateText = styled.span`
+  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
+`;
+
+const BestChoiceIcon = styled.span`
+  color: #f59e0b; /* Amber 500 */
+  font-size: 0.85rem;
+  line-height: 1;
+`;
+
+const InfoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
 `;
 
 const InfoText = styled.span`
@@ -88,7 +108,7 @@ const InfoText = styled.span`
   background-color: #e5e7eb;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  margin-left: 0.5rem;
+  white-space: nowrap; /* 줄바꿈 방지 */
 `;
 
 const DisclosurePanel = styled(Disclosure.Panel)`
@@ -123,15 +143,25 @@ const ColorDot = styled.div<{ color: string }>`
   background-color: ${(props) => props.color};
 `;
 
+const NoResultText = styled.p`
+  font-size: 0.9rem;
+  color: #9ca3af;
+  text-align: center;
+  padding: 1rem 0;
+`;
+
 type RecommendationPanelProps = {
   data: CalendarData;
 };
 
 export function RecommendationPanel({ data }: RecommendationPanelProps) {
   const { participants } = data;
-  const { maxAttendanceDates, bestPreferenceDates } = useMemo(() => {
-    return calculateRecommendations(data.responses, data.participants);
-  }, [data.responses, data.participants]);
+    const requiredParticipantIds = useCalendarStore(state => state.requiredParticipantIds);
+
+
+  const recommendedDates = useMemo(() => {
+    return calculateRecommendations(data.responses, data.participants, requiredParticipantIds);
+  }, [data.responses, data.participants, requiredParticipantIds]);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'M월 d일 (E)', { locale: ko });
@@ -143,57 +173,36 @@ export function RecommendationPanel({ data }: RecommendationPanelProps) {
 
   return (
     <PanelContainer>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <SectionTitle>📅 최다 참석일</SectionTitle>
-        {maxAttendanceDates.length > 0 ? (
-          <RecommendationList>
-            {maxAttendanceDates.map(({ date, attendees, attendeeIds }) => (
-              <Disclosure as="div" key={date}>
-                {({ open }) => (
-                  <>
-                    <DisclosureButton open={open}>
-                      <DateText>{formatDate(date)}</DateText>
-                      <InfoText>참석 {attendees}명</InfoText>
-                    </DisclosureButton>
-                    <Transition as={Fragment} /* ... 애니메이션 설정 ... */>
-                      <DisclosurePanel>
-                        <ParticipantNameList>
-                          {attendeeIds.map((id) => (
-                            <ParticipantTag key={id}>
-                              <ColorDot color={getUserColor(id)} />
-                              {getUserName(id)}
-                            </ParticipantTag>
-                          ))}
-                        </ParticipantNameList>
-                      </DisclosurePanel>
-                    </Transition>
-                  </>
-                )}
-              </Disclosure>
-            ))}
-          </RecommendationList>
-        ) : (
-          <NoResultText>
-            응답이 부족하여
-            <br />
-            추천할 수 없습니다.
-          </NoResultText>
-        )}
-      </div>
+      {recommendedDates.length > 0 ? (
+        <RecommendationList>
+          {recommendedDates.map(({ date, attendees, score, attendeeIds }, index) => {
+            // 목록의 첫 번째 항목인지 확인
+            const isBestChoice = index === 0;
 
-      <div>
-        <SectionTitle>⭐ 날짜 선호도</SectionTitle>
-        {bestPreferenceDates.length > 0 ? (
-          <RecommendationList>
-            {bestPreferenceDates.map(({ date, score, attendeeIds }) => (
+            return (
               <Disclosure as="div" key={date}>
                 {({ open }) => (
                   <>
-                    <DisclosureButton open={open}>
-                      <DateText>{formatDate(date)}</DateText>
-                      <InfoText>선호도 {score}점</InfoText>
+                    <DisclosureButton open={open} best={isBestChoice}>
+                      <DateTextContainer>
+                        {isBestChoice && <BestChoiceIcon>⭐</BestChoiceIcon>}
+                        <DateText>{formatDate(date)}</DateText>
+                      </DateTextContainer>
+                      <InfoContainer>
+                        <InfoText>
+                          {attendees}명 ({score})
+                        </InfoText>
+                      </InfoContainer>
                     </DisclosureButton>
-                    <Transition as={Fragment} /* ... 애니메이션 설정 ... */>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-200"
+                      enterFrom="opacity-0 translate-y-1"
+                      enterTo="opacity-100 translate-y-0"
+                      leave="transition ease-in duration-150"
+                      leaveFrom="opacity-100 translate-y-0"
+                      leaveTo="opacity-0 translate-y-1"
+                    >
                       <DisclosurePanel>
                         <ParticipantNameList>
                           {attendeeIds.map((id) => (
@@ -208,16 +217,16 @@ export function RecommendationPanel({ data }: RecommendationPanelProps) {
                   </>
                 )}
               </Disclosure>
-            ))}
-          </RecommendationList>
-        ) : (
-          <NoResultText>
-            모두가 가능한 날이 없거나,
-            <br />
-            응답이 부족합니다.
-          </NoResultText>
-        )}
-      </div>
+            );
+          })}
+        </RecommendationList>
+      ) : (
+        <NoResultText>
+          응답이 부족하여
+          <br />
+          추천할 수 없습니다.
+        </NoResultText>
+      )}
     </PanelContainer>
   );
 }

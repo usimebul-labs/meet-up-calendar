@@ -146,6 +146,9 @@ export default function CalendarClient({ initialData }: Props) {
           <CalendarSection>
             <CalendarHeader
               visibleMonth={visibleMonth}
+              startDate={calendarData.startDate}
+              endDate={calendarData.endDate}
+
               onPrevMonth={handlePrevMonth}
               onNextMonth={handleNextMonth}
               onSubmitStatus={handleStatusSubmit}

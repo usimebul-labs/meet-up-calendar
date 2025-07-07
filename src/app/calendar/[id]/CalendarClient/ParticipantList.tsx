@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { css } from '@emotion/react';
 import { getUserColor } from '@/utils/colorUtils';
 import type { CalendarData } from '@/services/calendar.service';
 import styled from '@emotion/styled';
+import { useCalendarActions, useCalendarStore } from '@/store/calendarStore';
 
 const PanelContainer = styled.div`
   background-color: #ffffff;
@@ -28,19 +30,42 @@ const List = styled.ul`
   gap: 0.75rem 1rem; /* 세로(row) 0.75rem, 가로(column) 1rem 간격 */
 `;
 
-const ListItem = styled.li`
+const ListItem = styled.li<{ isRequired: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* 이름이 길 경우를 대비해 overflow 처리 */
-  overflow: hidden; 
+  overflow: hidden;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+  }
+
+  ${(props) =>
+    props.isRequired &&
+    css`
+      background-color: #dbeafe; /* Blue background for required */
+      border-color: #3b82f6;
+      font-weight: 600;
+    `}
+`;
+
+const RequiredIcon = styled.span`
+  color: #3b82f6;
+  font-size: 1rem;
+  margin-right: 0.25rem;
 `;
 
 const ColorDot = styled.div<{ color: string }>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: ${props => props.color};
+  background-color: ${(props) => props.color};
   flex-shrink: 0; /* 이름이 길어져도 줄어들지 않도록 설정 */
 `;
 
@@ -57,16 +82,27 @@ type ParticipantListProps = {
 };
 
 export function ParticipantList({ participants }: ParticipantListProps) {
+  const requiredParticipantIds = useCalendarStore((state) => state.requiredParticipantIds);
+  const { toggleRequiredParticipant } = useCalendarActions();
+
   return (
     <PanelContainer>
-      <Title>참여자 ({participants.length})</Title>
+      <Title>👥 참여자</Title>
       <List>
-        {participants.map(p => (
-          <ListItem key={p.userId}>
-            <ColorDot color={getUserColor(p.userId)} />
-            <Name title={p.user?.name || ''}>{p.user?.name}</Name>
-          </ListItem>
-        ))}
+        {participants.map((p) => {
+          const isRequired = requiredParticipantIds.has(p.userId);
+          return (
+            <ListItem
+              key={p.userId}
+              isRequired={isRequired}
+              onClick={() => toggleRequiredParticipant(p.userId)}
+              title={isRequired ? '필수 참여 해제' : '필수 참여로 지정'}
+            >
+              <ColorDot color={getUserColor(p.userId)} />
+              <Name>{p.user?.name}</Name>
+            </ListItem>
+          );
+        })}
       </List>
     </PanelContainer>
   );
