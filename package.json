@@ -9,7 +9,9 @@
     "lint": "next lint",
     "prisma:migrate": "dotenv -e .env.local -- npx prisma migrate dev",
     "prisma:generate": "dotenv -e .env.local -- npx prisma generate",
-    "prisma:studio": "dotenv -e .env.local -- npx prisma studio"
+    "prisma:studio": "dotenv -e .env.local -- npx prisma studio",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -34,6 +36,11 @@
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "4.0.1",
+    "@storybook/addon-a11y": "9.0.15",
+    "@storybook/addon-docs": "9.0.15",
+    "@storybook/addon-onboarding": "9.0.15",
+    "@storybook/addon-vitest": "9.0.15",
     "@tailwindcss/postcss": "^4",
     "@tanstack/eslint-plugin-query": "^5.81.2",
     "@tanstack/react-query-devtools": "^5.81.5",
@@ -47,9 +54,14 @@
     "jsdom": "^26.1.0",
     "msw": "^2.10.2",
     "prisma": "^6.10.1",
+    "storybook": "9.0.15",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@storybook/nextjs-vite": "^9.0.15",
+    "@vitest/browser": "3.2.4",
+    "playwright": "^1.53.2",
+    "@vitest/coverage-v8": "3.2.4"
   }
 }

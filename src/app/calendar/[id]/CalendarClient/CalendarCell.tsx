@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
-import { format, isSameMonth, isToday } from 'date-fns';
-import { useCalendarStore, useCalendarActions } from '@/store/calendarStore';
-import type { Response as ResponseType, Participant, User, Status } from '@prisma/client';
-import { getUserColor } from '@/utils/colorUtils';
 import { CalendarData } from '@/services/calendar.service';
-import styled from '@emotion/styled';
+import { useCalendarActions, useCalendarStore } from '@/store/calendarStore';
+import { getUserColor } from '@/utils/colorUtils';
 import { css } from '@emotion/react';
+import styled from '@emotion/styled';
+import type { Response as ResponseType, Status } from '@prisma/client';
+import { format, isToday } from 'date-fns';
+import React from 'react';
 
 const CellContainer = styled.div<{ isSelectable: boolean; isSelected: boolean }>`
   min-height: 120px;
@@ -26,10 +26,8 @@ const CellContainer = styled.div<{ isSelectable: boolean; isSelected: boolean }>
   ${(props) =>
     !props.isSelectable &&
     css`
-      background-color: #f3f4f6; /* 비활성화된 셀 배경색 */
+      background-color: #f3f4f6;
       cursor: not-allowed;
-
-      /* 비활성화된 셀 위에서는 호버 효과 제거 */
       &:hover {
         background-color: #f3f4f6;
       }
@@ -94,14 +92,13 @@ export function CalendarCell({ day, responses, participants, availableDays }: Ca
   const isSelected = useCalendarStore((state) => state.selectedDates.has(dateStr));
   const { toggleDateSelection } = useCalendarActions();
 
-  // 간단한 스타일 객체 (추후 Styled Component로 전환 용이)
   const cellStyle: React.CSSProperties = {
     height: '120px',
     border: '1px solid #eee',
     padding: '0.5rem',
     backgroundColor: isSelected ? '#aadeff' : 'white',
     cursor: 'pointer',
-    userSelect: 'none', // 드래그 중 텍스트 선택 방지
+    userSelect: 'none',
   };
 
   const isSelectable = availableDays.includes(day.getDay());
