@@ -46,9 +46,23 @@ export default function LoginPage() {
           padding: '10px 20px',
           fontSize: '16px',
           cursor: 'pointer',
+          marginBottom: '10px',
         }}
       >
         Google 계정으로 로그인
+      </button>
+      <button
+        onClick={() => signIn('kakao', { callbackUrl: '/' })}
+        style={{
+          padding: '10px 20px',
+          fontSize: '16px',
+          cursor: 'pointer',
+          backgroundColor: '#FEE500',
+          color: '#000000',
+          border: 'none',
+        }}
+      >
+        Kakao 계정으로 로그인
       </button>
     </div>
   );
