@@ -1,11 +1,21 @@
 export const colors = {
-  primary: "#3182F6", // Toss Blue
-  secondary: "#F5F6FA",
-  text: "#222B45",
-  background: "#FFFFFF",
-  border: "#E5E8EB",
-  danger: "#FF4D4F",
-  warning: "#FFC107",
-  success: "#00C471",
-  disabled: "#B0B8C1",
+  // Core palette based on Toss Securities dark theme
+  primary: '#3B82F6',    // A vibrant blue for interactive elements
+  background: '#1A1D23', // Main dark background
+  surface: '#2A2D33',     // For card backgrounds, slightly lighter than main bg
+  border: '#3A3D43',      // For borders on cards and inputs
+
+  // Text colors
+  text: {
+    primary: '#FFFFFF',   // For primary text, headings
+    secondary: '#A9B0BB',// For secondary, less important text
+    disabled: '#707885',  // For disabled text
+  },
+
+  // Semantic colors
+  positive: '#00D1B2',    // For positive changes, success states (e.g., price up)
+  negative: '#FF3B30',    // For negative changes, error states (e.g., price down)
+
+  // Legacy colors (can be removed later if not used)
+  warning: '#FFC107',
 }; 
